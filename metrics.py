@@ -3,9 +3,8 @@ import torch.nn as nn
 from torchvision.models import inception_v3, Inception_V3_Weights
 
 class Metrics(nn.Module):
-    def __init__(self, device, ):
+    def __init__(self):
         super().__init__()
-        self.device
         self.model = inception_v3(weights=Inception_V3_Weights.IMAGENET1K_V1, transform_input=False) # use original Inception model and give [-1, 1] as a input
         self.model.eval()
 
@@ -13,7 +12,7 @@ class Metrics(nn.Module):
         self.model.fc.register_forward_hook(self._get_result('IS', self.results))
         self.model.avgpool.register_forward_hook(self._get_result('FID', self.results))
 
-        self.up = nn.UpSample(size=(299,299), mode='bilinear')
+        self.upsample = nn.Upsample(size=(299,299), mode='bilinear')
         self.softmax = nn.Softmax(dim=-1) # for IS
 
         self.fid_activations = None
@@ -60,24 +59,28 @@ class Metrics(nn.Module):
     def set_activations(self, is_acts, fid_acts):
         self.is_activations = is_acts
         self.fid_activations = fid_acts
+        return
     
-    def setup(self, eval_dataloader):
-        for img in eval_dataloader:
-            img = img.to(self.device)
+    def setup(self, eval_dataloader, device):
+        for img, _ in eval_dataloader:
+            img = img.to(device)
             self.update(img)
         self.mean_gt, self.sigma_gt = self._calc_fid_stats()
+        self.set_activations(None, None)
         return
 
     def update(self, img):
-        with torch.no_grad()
-            fid_act = self.results['FID'].squeeze()
+        with torch.no_grad():
+            img = self.upsample(img)
+            _ = self.model(img)
             is_act = self.results['IS'].squeeze()
-            self.fid_activations = torch.cat(self.fid_activations, fid_act) if self.fid_activations != None else fid_act
-            self.is_activations = torch.cat(self.is_activations, is_act) if self.is_activations != None else is_act
+            fid_act = self.results['FID'].squeeze()
+            self.is_activations = torch.cat((self.is_activations, is_act), dim=0) if self.is_activations != None else is_act
+            self.fid_activations = torch.cat((self.fid_activations, fid_act), dim=0) if self.fid_activations != None else fid_act
         return
 
     def forward(self):
         inception_score = self._calc_is()
         fid_score = self._calc_fid()
-            
+        self.set_activations(None, None)
         return inception_score, fid_score

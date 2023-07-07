@@ -8,7 +8,7 @@ from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.tensorboard import SummaryWriter
 
-from diffusion import GaussianDiffusionTrainer
+from diffusion import GaussianDiffusion
 
 class Utils():
     # Setup ececution environment
@@ -16,10 +16,10 @@ class Utils():
 
         settings['master'] = virtual_device == 0
         settings['writer'] = SummaryWriter(settings['log_path']) if settings['master'] else None
-        settings['device'] = settings['user_set_devices'][virtual_device] if settings['user_set_devices'] != None else virtual_device
+        settings['device'] = settings['user_set_devices'][virtual_device] if settings['mgpu'] and settings['user_set_devices'] != None else virtual_device
         
-        net = settings['model']() if settings['args'] == None else settings['model'](*settings['args'])
-        net = GaussianDiffusion(net)
+        net = settings['model'](*settings['args'], steps=settings['steps'])
+        net = GaussianDiffusion(net, steps=settings['steps'])
 
         settings['net'] = self.define_model(
             net=net, \
@@ -44,11 +44,11 @@ class Utils():
         train_net_modules = train_net.state_dict()
         sample_net_modules = sample_net.state_dict()
 
-        for name, train_net_module in train_net.items():
+        for name, train_net_module in train_net_modules.items():
             sample_net_module = sample_net_modules[name]
             old = sample_net_module.data
             new = train_net_module.data
-            sample_net_modules[key].data.copy_(old*decay + new*(1-decay))
+            sample_net_modules[name].data.copy_(old*decay + new*(1-decay))
 
         return
 
@@ -56,23 +56,23 @@ class Utils():
     def load_train_env(self, net, ema_net, optimizer, scheduler, resume, path, mgpu=False, user_set_devices=None):
         if resume:
             states = self.get_states(path, mgpu, user_set_devices)
-            self._load_model(net, states['net'], mgpu)
-            self._load_model(ema_net, states['ema_net'], mgpu)
+            self.load_model(net, states['net'], mgpu)
+            self.load_model(ema_net, states['ema_net'], mgpu)
             optimizer.load_state_dict(states['optimizer'])
             scheduler.load_state_dict(states['scheduler'])
             epoch = states['epoch']
             best_score = states['best_score']
         else:
             epoch = 0
-            best_score = 0.0
+            best_score = -1.0
         
         return epoch, best_score
     
     def store_train_env(self, epoch, net, ema_net, optimizer, scheduler, score, best_score, old_path, last_path, best_path, mgpu):
         # extract last state
         last_states = {
-            'net': net.module.state_dict() if mgpu else net.state_dict()
-            'ema_net': ema_net.module.state_dict() if mgpu else ema_net.state_dict()
+            'net': net.module.state_dict() if mgpu else net.state_dict(),
+            'ema_net': ema_net.module.state_dict() if mgpu else ema_net.state_dict(),
             'optimizer': optimizer.state_dict(),
             'scheduler': scheduler.state_dict(),
             'best_score': best_score,
@@ -96,7 +96,7 @@ class Utils():
     # Load test environment
     def load_test_env(self, ema_net, path, mgpu=False, user_set_devices=None):
         states = self.get_states(path, mgpu, user_set_devices)
-        self._load_model(ema_net, states['ema_net'], mgpu)
+        self.load_model(ema_net, states['ema_net'], mgpu)
         return
     
     # Get stored states 

@@ -26,6 +26,7 @@ if __name__ == '__main__':
     ### Hyper Parameters
     settings['iters']=800000
     settings['lr']=2e-4
+    settings['steps']=1000
 
     ### Basic settings
     settings['point_path']='/pnt'
@@ -34,8 +35,11 @@ if __name__ == '__main__':
     settings['old_pnt_path']='/old.pt'
     settings['check_pnt_path']='/best.pt'
     settings['model']=None
-    settings['args']=None 
+    settings['args']=()
     settings['mgpu']=False
+    settings['port']=None
+    settings['addr']=None
+    settings['user_set_devices']=None
     
     ### User settings
     resume = '-r' in sys.argv
@@ -78,7 +82,7 @@ if __name__ == '__main__':
             a = int(sys.argv[idx])
             args.append(a)
             idx += 1
-        settings['args'] = args
+        settings['args'] = (*args,)
     
     if '-l' in sys.argv:
         idx = sys.argv.index('-l')
@@ -126,11 +130,11 @@ if __name__ == '__main__':
             mp.spawn(trainer.setup_and_train, nprocs=ngpus_per_node, args=(ngpus_per_node, settings, resume))
         
         # test
-        mp.spawn(tester.setup_and_test, nprocs=ngpus_per_node, args=(ngpus_per_node, settings))
+        mp.spawn(trainer.setup_and_test, nprocs=ngpus_per_node, args=(ngpus_per_node, settings))
     else:
         # train
         if test == False:
             trainer.setup_and_train(0, ngpus_per_node=1, settings=settings, resume=resume)
 
         # test
-        tester.setup_and_test(0, ngpus_per_node=1, settings=settings)
+        trainer.setup_and_test(0, ngpus_per_node=1, settings=settings)
