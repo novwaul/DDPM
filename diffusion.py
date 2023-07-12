@@ -1,3 +1,5 @@
+from tqdm import tqdm
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -31,7 +33,7 @@ class GaussianDiffusion(nn.Module):
         B, *_ = x_T.shape
         dimension_num = len(x_T.shape)
         x_t = x_T
-        for step in reversed(range(self.steps)):
+        for step in tqdm(reversed(range(self.steps)), total=self.steps, desc=f'[Img.]', leave=False):
             times = step * x_t.new_ones((B, ), dtype=torch.int64)
             epsilon = self.model(x_t, times)
             one_over_sqrt_alpha = self._extract(self.one_over_sqrt_alphas, times, dimension_num)
