@@ -31,9 +31,7 @@ if __name__ == '__main__':
     ### Basic settings
     settings['point_path']='/pnt'
     settings['log_path']='/log'
-    settings['last_pnt_path']='/last.pt'
-    settings['old_pnt_path']='/old.pt'
-    settings['check_pnt_path']='/best.pt'
+    settings['acts_path']='/acts'
     settings['model']=None
     settings['args']=()
     settings['mgpu']=False
@@ -50,6 +48,7 @@ if __name__ == '__main__':
         idx = sys.argv.index('-v')
         settings['point_path'] += '_' + sys.argv[idx+1]
         settings['log_path'] += '_' + sys.argv[idx+1]
+        settings['acts_path'] += '_' + sys.argv[idx+1]
     
     if '-mgpu' in sys.argv:
         devices = []
@@ -71,9 +70,7 @@ if __name__ == '__main__':
         # update paths
         settings['log_path'] = os.getcwd() + '/' + model_name + settings['log_path']
         settings['point_path'] = os.getcwd() + '/' + model_name + settings['point_path']
-        settings['last_pnt_path'] = settings['point_path'] + settings['last_pnt_path']
-        settings['old_pnt_path'] = settings['point_path'] + settings['old_pnt_path']
-        settings['check_pnt_path'] = settings['point_path'] + settings['check_pnt_path']
+        settings['acts_path'] = os.getcwd() + '/' + model_name + settings['acts_path']
 
     if '-a' in sys.argv:
         idx = sys.argv.index('-a') + 1
@@ -117,6 +114,10 @@ if __name__ == '__main__':
     ### make point directory
     if not os.path.exists(settings['point_path']):
         os.makedirs(settings['point_path'])
+
+    ### make activation directory
+    if not os.path.exists(settings['acts_path']):
+        os.makedirs(settings['acts_path'])
 
     ### execution
     if settings['mgpu'] == True:

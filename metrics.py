@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torch.nn as nn
 from torchvision.models import inception_v3, Inception_V3_Weights
@@ -53,22 +55,27 @@ class Metrics(nn.Module):
 
         return torch.mean(scores), torch.std(scores)
     
+    def _gen_path(self, path, virtual_device):
+        com_path = f'{path}/virtual_device_{virtual_device}'
+
+        if not os.path.exists(com_path):
+            os.makedirs(com_path)
+
+        last_path = com_path + '/last.acts'
+        old_path = com_path + '/old.acts'
+        return last_path, old_path
+    
     def get_activations(self):
         return self.is_activations, self.fid_activations
+    
+    def get_stored_acts_num(self):
+        return self.is_activations.shape[0] if self.is_activations != None else 0
     
     def set_activations(self, is_acts, fid_acts):
         self.is_activations = is_acts
         self.fid_activations = fid_acts
         return
     
-    def setup(self, eval_dataloader, device):
-        for img, _ in eval_dataloader:
-            img = img.to(device)
-            self.update(img)
-        self.mean_gt, self.sigma_gt = self._calc_fid_stats()
-        self.set_activations(None, None)
-        return
-
     def update(self, img):
         with torch.no_grad():
             img = self.upsample(img)
@@ -77,8 +84,45 @@ class Metrics(nn.Module):
             fid_act = self.results['FID'].squeeze()
             self.is_activations = torch.cat((self.is_activations, is_act), dim=0) if self.is_activations != None else is_act
             self.fid_activations = torch.cat((self.fid_activations, fid_act), dim=0) if self.fid_activations != None else fid_act
+
+        return
+    
+    def store_activations(self, path, virtual_device):
+        last_states = {
+            'is_activations': self.is_activations,
+            'fid_activations': self.fid_activations,
+        }
+
+        last_path, old_path = self._gen_path(path, virtual_device)
+
+        if os.path.exists(old_path):
+            os.remove(old_path)
+        if os.path.exists(last_path):
+            os.rename(last_path, old_path)
+
+        torch.save(last_states, last_path)
+        
+        return
+    
+    def load_activations(self, path, virtual_device):
+        last_path, _ = self._gen_path(path, virtual_device)
+        if os.path.exists(last_path):
+            states = torch.load(last_path)
+            is_acts = states['is_activations']
+            fid_acts = states['fid_activations']
+            self.set_activations(is_acts, fid_acts)
         return
 
+    # calculate GT dataset mean and sigma used to calculate FID score; to reduce execution time during test
+    def setup(self, eval_dataloader, device):
+        for img, _ in eval_dataloader:
+            img = img.to(device)
+            self.update(img)
+        self.mean_gt, self.sigma_gt = self._calc_fid_stats()
+        self.set_activations(None, None)
+        return
+    
+    # calculate scores
     def forward(self):
         inception_score = self._calc_is()
         fid_score = self._calc_fid()

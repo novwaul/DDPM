@@ -11,9 +11,16 @@ from torch.utils.tensorboard import SummaryWriter
 from diffusion import GaussianDiffusion
 
 class Utils():
+
+    def _gen_path(self, path):
+        last_path = path + '/last.pt'
+        old_path = path + '/old.pt'
+        return last_path, old_path
+
     # Setup ececution environment
     def setup_exec_env(self, virtual_device, ngpus_per_node, settings):
 
+        settings['virtual_device'] = virtual_device 
         settings['master'] = virtual_device == 0
         settings['writer'] = SummaryWriter(settings['log_path']) if settings['master'] else None
         settings['device'] = settings['user_set_devices'][virtual_device] if settings['mgpu'] and settings['user_set_devices'] != None else virtual_device
@@ -61,36 +68,32 @@ class Utils():
             optimizer.load_state_dict(states['optimizer'])
             scheduler.load_state_dict(states['scheduler'])
             epoch = states['epoch']
-            best_score = states['best_score']
         else:
             epoch = 0
-            best_score = -1.0
         
-        return epoch, best_score
+        return epoch
     
-    def store_train_env(self, epoch, net, ema_net, optimizer, scheduler, score, best_score, old_path, last_path, best_path, mgpu):
+    def store_train_env(self, epoch, net, ema_net, optimizer, scheduler, path, mgpu):
+        last_path, old_path = self._gen_path(path)
+        
         # extract last state
         last_states = {
             'net': net.module.state_dict() if mgpu else net.state_dict(),
             'ema_net': ema_net.module.state_dict() if mgpu else ema_net.state_dict(),
             'optimizer': optimizer.state_dict(),
             'scheduler': scheduler.state_dict(),
-            'best_score': best_score,
             'epoch': epoch+1,
         }
         
         # update old result for backup
-        if epoch > 0:
-            if os.path.exists(old_path):
-                os.remove(old_path)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+        if os.path.exists(last_path):
             os.rename(last_path, old_path)
 
         # store last state
         torch.save(last_states, last_path)
         
-        # store best result state
-        if score > best_score:
-            torch.save(last_states, best_path)
         return
     
     # Load test environment
@@ -101,8 +104,9 @@ class Utils():
     
     # Get stored states 
     def get_states(self, path, mgpu=False, user_set_devices=None):
+        last_path, _ = self._gen_path(path)
         map_location = {'cuda:%d'%user_set_devices[0]: 'cuda:%d'%user_set_devices[dist.get_rank()]} if mgpu else None
-        return torch.load(path, map_location=map_location)
+        return torch.load(last_path, map_location=map_location)
     
     # Define model
     def define_model(self, net, ngpus_per_node, virtual_device, device, master, mgpu, addr, port):
