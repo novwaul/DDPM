@@ -30,13 +30,13 @@ class Metrics(nn.Module):
     def _calc_fid_stats(self):
         act = self.fid_activations
         mean = torch.mean(act, axis=0)
-        sigma = torch.cov(torch.cat((act.t(), act.t()), axis=0))
+        sigma = torch.cov(act.t())
         return mean, sigma
     
     def _calc_fid(self):
         mean_gt, sigma_gt = self.mean_gt, self.sigma_gt
         mean_x0, sigma_x0 = self._calc_fid_stats()
-        fid_score = torch.square(mean_gt-mean_x0) + torch.trace(sigma_gt + sigma_x0 - 2*torch.sqrt(sigma_gt*sigma_x0))
+        fid_score = torch.square(mean_gt-mean_x0).sum() + torch.trace(sigma_gt + sigma_x0 - 2*torch.sqrt(sigma_gt*sigma_x0))
         return fid_score
 
     def _calc_is(self):

@@ -93,14 +93,12 @@ class DiffTrainer(Utils):
         # load test env
         self.load_test_env(self.ema_net, self.point_path, mgpu=self.mgpu, user_set_devices=self.user_set_devices)
         # evaluate scores
-        (is_mean, is_std), fid, sample = self._eval()
-        sample = self.denorm(sample)
+        is_mean, is_std, fid = self._eval()
         # summary
         if self.master:
             self.writer.add_scalars('Test IS', {'mean': is_mean, 'std':is_std}, 0)
             self.writer.add_scalar('Test FID', fid, 0)
-            self.writer.add_images('Test Images', sample, 0)
-            print(f'> [Stats.] | IS: ({is_mean:.3f}, {is_std:.3f}) | FID: {fid}')
+            print(f'> [Stats.] | IS: ({is_mean:.3f}, {is_std:.3f}) | FID: {fid:.3f}')
 
         return
     
@@ -217,9 +215,6 @@ class DiffTrainer(Utils):
                 x_0 = self.ema_net.sample(x_T)
                 self.scores.update(x_0)
                 self.scores.store_activations(self.acts_path, self.virtual_device)
-
-                if idx == self.report_eval_img_idx:
-                    sample = x_0
                 
                 idx += 1
                 pbar.update(1)
@@ -240,8 +235,11 @@ class DiffTrainer(Utils):
             is_acts = torch.cat(is_acts_gather)
             fid_acts = torch.cat(fid_acts_gather)
             self.scores.set_activations(is_acts, fid_acts)
+
         
-        return *self.scores(), sample
+        (is_mean, is_std), fid = self.scores()
+        
+        return is_mean, is_std, fid
     
     
     
