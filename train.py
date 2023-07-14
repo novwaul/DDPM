@@ -26,7 +26,6 @@ class DiffTrainer(Utils):
         self.report_img_per = 100
         self.report_img_num = 8
         self.report_img_size = 32
-        self.report_eval_img_idx = 0
     
     def setup_and_test(self, virtual_device, ngpus_per_node, settings):
         self.setup_exec_env(virtual_device, ngpus_per_node, settings)
