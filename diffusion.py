@@ -10,7 +10,7 @@ class GaussianDiffusion(nn.Module):
         # register common variables
         self.steps = steps
         self.model = model
-        self.register_buffer("betas", torch.linspace(start=1e-4, end=2e-2, steps=self.steps)) # for precision
+        self.register_buffer("betas", torch.linspace(start=1e-4, end=2e-2, steps=self.steps)) 
         self.register_buffer("alphas", 1. - self.betas)
         self.register_buffer("alphas_bar", torch.cumprod(self.alphas, dim=0))
 
