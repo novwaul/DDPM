@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class UNet(nn.Module): # for CelabA-HQ; 256x256 pixels
+class UNet(nn.Module): 
     def __init__(self, C, steps, channel_expansions=[1,2,2,2], emb_expansion=4, resblock_per_down_stage=2, attn_depth=1, drp_rate=0.1): # from the original code; set 0.1 for CIFAR10 and 0.0 for the others.
         super().__init__()
         self.emb = TimeEmbedding(steps=steps, dim=C, exp=emb_expansion)
@@ -11,7 +11,7 @@ class UNet(nn.Module): # for CelabA-HQ; 256x256 pixels
         depth = len(channel_expansions)
         last_depth = depth-1
         if attn_depth == None:
-            attn_depth = last_depth - 1 # 32 -> 16 -> 8 -> 4
+            attn_depth = last_depth - 1 
 
         resblock_per_up_stage = resblock_per_down_stage + 1 # to match block connections between up stage and down stage, where { Down_WideResBlock_1 -> Up_WideResBlock_1 }, { Down_WideResBlock_2 -> Up_WideResBlock_2 }, and { Down_Block -> Up_WideResBlock_3 }
 
