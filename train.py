@@ -74,7 +74,7 @@ class DiffTrainer(Utils):
         train_transform = transforms.Compose([transforms.ToTensor(), transforms.RandomHorizontalFlip()])
         train_dataset = torchvision.datasets.CIFAR10(root=self.root, train=True, transform=train_transform)
         self.train_sampler = DistributedSampler(train_dataset, shuffle=False, drop_last=True) if self.mgpu else None
-        self.train_dataloader = DataLoader(train_dataset, batch_size=self.train_batch_size, num_workers=self.workers, sampler=train_sampler, pin_memory=True)
+        self.train_dataloader = DataLoader(train_dataset, batch_size=self.train_batch_size, num_workers=self.workers, sampler=self.train_sampler, pin_memory=True)
 
         # register train variables 
         self.optimizer = optim.Adam(self.net.parameters(), lr=self.lr)
