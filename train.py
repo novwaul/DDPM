@@ -137,7 +137,8 @@ class DiffTrainer(Utils):
     def _train(self, epoch):
         self.net.train()
         self.ema_net.train()
-        self.train_sampler.set_epoch(epoch)
+        if self.train_sampler != None:
+            self.train_sampler.set_epoch(epoch)
         
         t_loss_tot = 0.0
         for img, _ in tqdm(self.train_dataloader, desc=f'Epoch {epoch+1}/{self.epochs} [Train]', leave=False):
