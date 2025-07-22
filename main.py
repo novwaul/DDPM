@@ -61,7 +61,7 @@ if __name__ == '__main__':
         settings['mgpu']=True
         settings['port']=8888
         settings['addr']='127.0.0.1'
-        settings['user_set_devices'] = sorted(devices) if len(device) > 0 else None
+        settings['user_set_devices'] = sorted(devices) if len(devices) > 0 else None
     
     if '-m' in sys.argv:
         idx = sys.argv.index('-m')
