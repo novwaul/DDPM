@@ -1,5 +1,5 @@
 # DDPM
-<p> Reimplementation of DDPM https://arxiv.org/abs/2006.1123 </p>
+<p> Reimplementation of DDPM https://arxiv.org/abs/2006.11239 </p>
 
 ### Result at 373 epochs (18.2% of total epochs)
 |IS Mean|IS Std.|FID|
