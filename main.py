@@ -14,7 +14,7 @@ if __name__ == '__main__':
     ### Model Lib.
     models = dict()
     for name in os.listdir():
-        if os.path.isdir(name) and not name.startswith('.') and not name.startswith('_'):
+        if os.path.isdir(name) and not name.startswith('.') and not name.startswith('_') and not name.startswith('data'):
             module = __import__(name+'.model', fromlist=[name])
             models[name] = module
     
