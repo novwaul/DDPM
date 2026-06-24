@@ -50,7 +50,7 @@ After setting those parameters and paths,
 |:---:|:---:|
 |Base Channel|64|
 |Train Batch Size|128|
-|Train Iterations|145.6K|
+|Train Iterations|145.6K(Early Stopping)|
 |Trian Data|CIFAR10|
 |Train Beta Scehdule|Linear Schedule from 1e-4 to 2e-2|
 |Sample Beta Schedule|Linear Schedule from 1e-4 to 2e-2|
