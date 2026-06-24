@@ -6,7 +6,7 @@ The below results were measured without self-attention due to a typo in the self
 
 ## How to run the code
 
-First, set hyper-paramters and image paths at line 30~47 in <code> main.py </code>.
+First, set hyper-paramters and image paths at line 26~40 in <code> main.py </code>.
 
 For example,
 
