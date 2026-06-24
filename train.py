@@ -18,7 +18,7 @@ from metrics import Metrics
 class DiffTrainer(Utils):
     # Init params for train and test
     def __init__(self):
-        self.root="/home/kaist/inje/ddpm/data/"
+        self.root="os.path.join(os.getcwd(), "data")
         self.img_num=50000 # CIFAR 10 Train Data num
         self.train_batch_size=128
         self.eval_batch_size=256
