@@ -23,7 +23,7 @@ settings['acts_path']='/acts'
 ...
 ```
 
-And if you want to change training conditions(e.g., batch size), set parameters at line in <code> train.py </code>.
+And if you want to change training conditions(e.g., batch size), set parameters at line 20~28 in <code> train.py </code>.
 
 For example,
 
