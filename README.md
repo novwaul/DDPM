@@ -23,6 +23,19 @@ settings['acts_path']='/acts'
 ...
 ```
 
+And if you want to change training conditions(e.g., batch size), set parameters at line in <code> train.py </code>.
+
+For example,
+
+```
+def __init__(self):
+    self.root=os.path.join(os.getcwd(), "data")
+    self.img_num=50000 # CIFAR 10 Train Data num
+    self.train_batch_size=128
+    self.eval_batch_size=256
+...
+```
+
 After setting those parameters and paths,
 
 **Train:** <code> python main.py -m UNet -a [channel num] </code>
