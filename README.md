@@ -11,10 +11,15 @@ First, set hyper-paramters and image paths at line 26~40 in <code> main.py </cod
 For example,
 
 ```
-settings['steps']=2000
-settings['sample_steps']=100
-settings['iters']=500000
-settings['lr']=1e-5
+### Hyper Parameters
+settings['iters']=800000
+settings['lr']=2e-4
+settings['steps']=1000
+
+### Basic settings
+settings['point_path']='/pnt'
+settings['log_path']='/log'
+settings['acts_path']='/acts'
 ...
 ```
 
